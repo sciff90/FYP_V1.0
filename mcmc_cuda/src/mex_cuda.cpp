@@ -20,7 +20,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 //declare variables
     mxArray *u_m,*y_m,*theta_m,*theta_0_m;
     const mwSize *dims;
-    int N,order,num_samples;
+    long int N;
+    int order,num_samples;
     double elim;
     double *u,*y,*theta,*theta_0;
        
@@ -30,7 +31,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     y_m = mxDuplicateArray(prhs[1]);  
     theta_0_m = mxDuplicateArray(prhs[4]);
 
-    N = (int)mxGetScalar(prhs[2]);
+    N = (long int)mxGetScalar(prhs[2]);
     order = (int)mxGetScalar(prhs[3]);
     elim = (double)mxGetScalar(prhs[5]);
 
@@ -51,7 +52,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 //    mxFree(y_m);
 //    mxFree(theta_m);
 //    mxFree(theta_0_m);
-
-
+//
+    
     return;
 }

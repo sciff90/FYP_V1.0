@@ -12,7 +12,7 @@
 void filter_out(double *theta,double *y,const double *u,int num_samples,int order)
 {
 	int ii,jj;
-	int N = 20000000;
+	long int N = 20000000;
 	double *a = &theta[0];
 	double *b = &theta[N*(order+1)];
 
@@ -52,7 +52,7 @@ unsigned int hash(unsigned int a)
 }
 
 	__global__ 
-void mcmc_kernel(double *u,double *y,double *theta,int N,int order,int num_samples,double *theta_0,double elim)
+void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_samples,double *theta_0,double elim)
 {
 	const int tid = blockDim.x*blockIdx.x+threadIdx.x;
 	const int tt = blockDim.x*gridDim.x;	
@@ -141,19 +141,19 @@ void mcmc_kernel(double *u,double *y,double *theta,int N,int order,int num_sampl
 
 }
 
-void mcmc(double *u,double *y,double *theta,int N,int order, int num_samples,double *theta_0,double elim)
+void mcmc(double *u,double *y,double *theta,long int N,int order, int num_samples,double *theta_0,double elim)
 {
 
 	double *d_u,*d_y,*d_y_test,*d_theta,*d_theta_0;
 
 	int u_size = num_samples*sizeof(double);
-	int theta_size = N*2*(order+1)*sizeof(double);
+	long int theta_size = N*2*(order+1)*sizeof(double);
 	int theta_0_size = 2*(order+1)*sizeof(double);
 
-	printf("N = %d\n",N);
+	printf("N = %ld\n",N);
 	printf("order = %d\n",order);
 	printf("num_samples = %d\n",num_samples);
-	printf("theta_size = %d\n",theta_size);
+	printf("theta_size = %ld\n",theta_size);
 
 	cudaMalloc((void**)&d_u, u_size ); 
 	cudaMalloc((void**)&d_y, u_size ); 
@@ -176,6 +176,8 @@ void mcmc(double *u,double *y,double *theta,int N,int order, int num_samples,dou
 	cudaFree(d_theta);
 	cudaFree(d_theta_0);
 	cudaFree(d_y_test);
+
+	cudaThreadExit();
 
 	return ;
 }

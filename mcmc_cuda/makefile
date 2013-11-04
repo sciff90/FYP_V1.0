@@ -10,7 +10,7 @@ INC = inc
 EXEC = mcmc
 
 #Define Directories
-MATLAB_DIR = /usr/local/MATLAB/R2013b
+MATLAB_DIR = /usr/local/MATLAB/R2013a
 CUDA_LIB64='/usr/local/cuda/lib64'
 
 OBJECTS = ${OBJ}/mex_cuda.o\
@@ -26,7 +26,7 @@ NVCC = nvcc
 	
 #Define Switches
 CXX_SWITCH = -fPIC
-NVCC_SWITCH = -arch=sm_30 -shared -Xcompiler -fPIC
+NVCC_SWITCH = -arch=sm_20 -shared -Xcompiler -fPIC
 MEX_SWITCH = -cxx  
 
 #Define Libraries
