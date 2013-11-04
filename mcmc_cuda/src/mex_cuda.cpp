@@ -47,10 +47,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     theta_0 = mxGetPr(theta_0_m);
 
     mcmc(u,y,theta,N,order,num_samples,theta_0,elim);  
-    mxFree(u_m);
-    mxFree(y_m);
-    mxFree(theta_m);
-    mxFree(theta_0_m);
+//    mxFree(u_m);
+//    mxFree(y_m);
+//    mxFree(theta_m);
+//    mxFree(theta_0_m);
 
 
     return;

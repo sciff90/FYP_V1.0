@@ -12,7 +12,7 @@
 void filter_out(double *theta,double *y,const double *u,int num_samples,int order)
 {
 	int ii,jj;
-	int N = 10000000;
+	int N = 20000000;
 	double *a = &theta[0];
 	double *b = &theta[N*(order+1)];
 
@@ -38,11 +38,6 @@ void filter_out(double *theta,double *y,const double *u,int num_samples,int orde
 
 		y[ii] = y[ii]/a[0];		
 	}
-	//printf("a[1] = %f\n,b[0] = %f\n,b[1] = %f\n\n",a[N],b[0],b[N]);
-	//y[2] = 0.4868;
-	//for(int ii=0;ii<2*order;ii++)
-		//printf("y_test[1] = %f\n",y[1]);
-	
 }
 	__device__
 unsigned int hash(unsigned int a)
@@ -71,19 +66,10 @@ void mcmc_kernel(double *u,double *y,double *theta,int N,int order,int num_sampl
 		thrust::random::experimental::normal_distribution<double> dist_norm(0, 1);
 		//thrust::random::experimental::uniform_distribution<double> dist_uniform(0, 1);
 		
-		/*theta[N*0+tid] = 1.0;
-		theta[N*1+tid] = -1.76;
-		theta[N*2+tid] = 1.1829;
-		theta[N*3+tid] = -0.2781;
-		theta[N*4+tid] = 0.0181;
-		theta[N*5+tid] = 0.0543;
-		theta[N*6+tid] = 0.0543;
-		theta[N*7+tid] = 0.0181;*/
-
 		for(int ii=0;ii<2*(order+1);ii++)		
 			theta[N*ii+tid] = theta_0[ii];		
 
-		double sigma = 0.001;
+		double sigma = 0.01;
 
 		int kk=0;
 		int accepted=0;
@@ -96,8 +82,7 @@ void mcmc_kernel(double *u,double *y,double *theta,int N,int order,int num_sampl
 			{
 				theta[N*jj+ii] = theta[N*jj+ii-tt] + sigma*dist_norm(rng_normal);
 			}
-			theta[ii] = 1.0;
-			//printf("a1=  %f\n",theta[N*1+ii]);
+			theta[ii] = 1.0;			
 
 			filter_out(&theta[ii],y_test,u,num_samples,order);
 			float max_diff = 0;
@@ -126,13 +111,13 @@ void mcmc_kernel(double *u,double *y,double *theta,int N,int order,int num_sampl
 				accepted++;				
 			}
 			kk++;
-			if(kk%1000==0 && kk!=0 && flg==0)
+			if(kk%100==0 && kk!=0 && flg==0)
 			{
-				if((double)accepted/1000>0.4)
+				if((double)accepted/100>0.4)
 				{
 					sigma=sigma*1.2;					
 				}
-				else if((double)accepted/1000<0.3)
+				else if((double)accepted/100<0.3)
 				{
 					sigma = sigma/1.2;
 				}

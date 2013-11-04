@@ -1,8 +1,8 @@
 clear all;
-N = 10000000;
+N = 20000000;
 num_samples = 50;
-order = 4;
-elim = 0.1;
+order = 2;
+elim = 0.01;
 
 
 u = ones(1,num_samples);
