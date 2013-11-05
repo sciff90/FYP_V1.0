@@ -1,18 +1,13 @@
-#include <thrust/random.h>
-#include <thrust/device_vector.h>
-#include <thrust/transform.h>
-#include <thrust/iterator/counting_iterator.h>
+#include<cmath>
+#include<random>
+#include<omp.h>
 #include <iostream>
 #include <fstream>
 
-#define Nthreads 256
-#define PI 3.141592
-
-	__device__
 void filter_out(double *theta,double *y,const double *u,int num_samples,int order)
 {
 	int ii,jj;
-	long int N = 20000000;
+	long int N = 80000000;
 	double *a = &theta[0];
 	double *b = &theta[N*(order+1)];
 
@@ -39,7 +34,7 @@ void filter_out(double *theta,double *y,const double *u,int num_samples,int orde
 		y[ii] = y[ii]/a[0];		
 	}
 }
-	__device__
+
 unsigned int hash(unsigned int a)
 {
 	a = (a+0x7ed55d16) + (a<<12);
@@ -51,21 +46,22 @@ unsigned int hash(unsigned int a)
 	return a;
 }
 
-	__global__ 
-void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_samples,double *theta_0,double elim)
+
+void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_samples,double *theta_0,double elim,int nthreads,int tid)
 {
-	const int tid = blockDim.x*blockIdx.x+threadIdx.x;
-	const int tt = blockDim.x*gridDim.x;	
+	const int tt = nthreads;	
 	double y_test[50];
 	if(tid<tt)
 	{
 		unsigned int seed_normal = hash(tid);
 		unsigned int seed_uniform = hash(tid);
-		thrust::default_random_engine rng_normal(seed_normal);
-		thrust::default_random_engine rng_uniform(seed_uniform);
+		//Random number generator
+		std::mt19937 rng_normal(seed_normal);
+		std::mt19937 rng_uniform(seed_uniform);
 
-		thrust::random::experimental::normal_distribution<double> dist_norm(0, 1);
-		thrust::random::uniform_real_distribution<double> dist_uniform(0, 1);
+		//Random number distributions
+		std::normal_distribution<double> dist_norm;
+		std::uniform_real_distribution<double> dist_uniform(0.0,1.0);
 		
 		for(int ii=0;ii<2*(order+1);ii++)		
 			theta[N*ii+tid] = theta_0[ii];		
@@ -75,6 +71,8 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 		int kk=0;
 		int accepted=0;
 		int flg=0;
+		
+		//printf("Random number from thread %d = %f\n",tid,sigma*dist_norm(rng_normal));
 		for(int ii=tid+tt;ii<N;ii +=tt)
 		{
 			//Generate Proposal
@@ -88,7 +86,7 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 			filter_out(&theta[ii],y_test,u,num_samples,order);
 			float max_diff = 0;
 			int max_loc = 0;
-			float diff;			
+			float diff;						
 			
 			for(int jj=0;jj<num_samples-order;jj++)
 			{
@@ -101,8 +99,6 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 			}
 			if(max_diff>elim)
 			{
-				//printf("flagged max_diff = %f at postion %d\n",max_diff,max_loc);
-				//printf("y[max_loc] = %f y_test[max_loc] = %f\n",y[max_loc],y_test[max_loc]);
 				//printf("a1=  %f\n",theta[N*1+ii]);
 				for(int jj=0;jj<2*(order+1);jj++)
 					theta[N*jj+ii] = theta[N*jj+ii-tt];
@@ -117,23 +113,26 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 				{
 					for(int jj=0;jj<2*(order+1);jj++)
 						theta[N*jj+ii] = theta[N*jj+ii-tt];
-				}
+				}				
 			}
 			kk++;
 			if(kk%1000==0 && kk!=0 && flg==0)
 			{
-				if((double)accepted/1000>0.4)
+				if((double)accepted/1000>0.3)
 				{
-					sigma=sigma*1.2;					
+					sigma=sigma*1.2;
+					printf("accepted = %d sigma = %f at ii = %d arate = %f\n",accepted,sigma,ii,(double)accepted/1000);					
 				}
-				else if((double)accepted/1000<0.3)
+				else if((double)accepted/1000<0.2)
 				{
 					sigma = sigma/1.2;
+					printf("accepted = %d sigma = %f at ii = %d arate = %f\n",accepted,sigma,ii,(double)accepted/1000);
 				}
 				else
 				{
 					flg=1;				
-					printf("sigma = %f\n",sigma);
+					printf("sigma = %f at ii = %d arate = %f\n",sigma,ii,(double)accepted/1000);
+					printf("tt = %d\n",tt);
 				}
 				//printf("a_rate = %f\n",(double)accepted/1000);
 				kk=0;
@@ -143,8 +142,10 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 			}
 			
 
-						
+		//if(tid==1)				
+			//printf("accepted from thread %d = %d\n",tid,accepted);
 		}
+		
 
 	}
 
@@ -152,8 +153,6 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 
 void mcmc(double *u,double *y,double *theta,long int N,int order, int num_samples,double *theta_0,double elim)
 {
-
-	double *d_u,*d_y,*d_y_test,*d_theta,*d_theta_0;
 
 	int u_size = num_samples*sizeof(double);
 	long int theta_size = N*2*(order+1)*sizeof(double);
@@ -163,30 +162,29 @@ void mcmc(double *u,double *y,double *theta,long int N,int order, int num_sample
 	printf("order = %d\n",order);
 	printf("num_samples = %d\n",num_samples);
 	printf("theta_size = %ld\n",theta_size);
+	
+	std::cout << "Parallel MCMC" << std::endl;
 
-	cudaMalloc((void**)&d_u, u_size ); 
-	cudaMalloc((void**)&d_y, u_size ); 
-	cudaMalloc((void**)&d_theta, theta_size );
-	cudaMalloc((void**)&d_y_test, u_size );
-	cudaMalloc((void**)&d_theta_0,theta_0_size);
+	//Setup OMP part nthreads etc
+	int nthreads,tid;	
+	#pragma omp parallel private(tid)
+	{
+		tid = omp_get_thread_num();
+	
+		if(tid == 0)
+		{
+			nthreads = omp_get_num_threads();
+		}
+	}
+	
+	std::cout << "nthreads = " << nthreads << std::endl;	
+	
+	#pragma omp parallel private(tid)
+	{
+		tid = omp_get_thread_num();
+		mcmc_kernel(u,y,theta,N,order,num_samples,theta_0,elim,nthreads,tid);
+	}
 
-
-	cudaMemcpy(d_u, u, u_size, cudaMemcpyHostToDevice );
-	cudaMemcpy(d_y, y, u_size, cudaMemcpyHostToDevice );
-	cudaMemcpy(d_theta_0,theta_0,theta_0_size,cudaMemcpyHostToDevice);
-
-	mcmc_kernel<<<8,32>>>(d_u,d_y,d_theta,N,order,num_samples,d_theta_0,elim);
-
-	cudaMemcpy( theta, d_theta, theta_size, cudaMemcpyDeviceToHost ); 
-
-
-	cudaFree(d_u);
-	cudaFree(d_y);
-	cudaFree(d_theta);
-	cudaFree(d_theta_0);
-	cudaFree(d_y_test);
-
-	cudaThreadExit();
 
 	return ;
 }

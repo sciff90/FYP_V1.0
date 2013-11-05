@@ -1,5 +1,5 @@
 clear all;
-N = 20000000;
+N = 80000000;
 num_samples = 50;
 order = 1;
 elim = 0.1;
