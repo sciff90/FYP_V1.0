@@ -30,7 +30,7 @@ while k<=N
 	if max(abs(y-ytest))>elim
 		THETA(k,:) = THETA(k-1,:);
 	else
-		tt = y-ytest;
+		tt = y-ytest		;
 		p_rat = 1-(max(tt));
 		if(rand()<=p_rat)
 			THETA(k,:) = xi;

@@ -1,6 +1,6 @@
 clear all;
-N = 20000000;
-num_samples = 50;
+N = 30000000;
+num_samples = 100;
 order = 1;
 elim = 0.1;
 

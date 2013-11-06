@@ -9,10 +9,9 @@
 #define PI 3.141592
 
 	__device__
-void filter_out(double *theta,double *y,const double *u,int num_samples,int order)
+void filter_out(double *theta,double *y,const double *u,int num_samples,int order, long int N)
 {
-	int ii,jj;
-	long int N = 20000000;
+	int ii,jj;	
 	double *a = &theta[0];
 	double *b = &theta[N*(order+1)];
 
@@ -51,6 +50,12 @@ unsigned int hash(unsigned int a)
 	return a;
 }
 
+__global__
+void mcmc_burnin(double *u,double *y,double *theta,long int N,int order,int num_samples,double *theta_0,double elim)
+{
+
+}
+
 	__global__ 
 void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_samples,double *theta_0,double elim)
 {
@@ -70,22 +75,23 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 		for(int ii=0;ii<2*(order+1);ii++)		
 			theta[N*ii+tid] = theta_0[ii];		
 
-		double sigma = 1.0;
+		double sigma = 0.1;
 
 		int kk=0;
 		int accepted=0;
 		int flg=0;
-		for(int ii=tid+tt;ii<N;ii +=tt)
+		int ii=tid+tt;
+		while(ii<N)
 		{
 			//Generate Proposal
-			
+		
 			for(int jj=0;jj<2*(order+1);jj++)
 			{
 				theta[N*jj+ii] = theta[N*jj+ii-tt] + sigma*dist_norm(rng_normal);
 			}
 			theta[ii] = 1.0;			
 
-			filter_out(&theta[ii],y_test,u,num_samples,order);
+			filter_out(&theta[ii],y_test,u,num_samples,order,N);
 			float max_diff = 0;
 			int max_loc = 0;
 			float diff;			
@@ -109,7 +115,7 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 			}
 			else
 			{
-				if(1/(2*elim)*(1-max_diff)>=dist_uniform(rng_uniform))
+				if(dist_uniform(rng_uniform)<=(1-max_diff))
 				{
 					accepted++;				
 				}
@@ -122,11 +128,11 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 			kk++;
 			if(kk%1000==0 && kk!=0 && flg==0)
 			{
-				if((double)accepted/1000>0.4)
+				if((double)accepted/1000>0.3)
 				{
 					sigma=sigma*1.2;					
 				}
-				else if((double)accepted/1000<0.3)
+				else if((double)accepted/1000<0.25)
 				{
 					sigma = sigma/1.2;
 				}
@@ -135,19 +141,20 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 					flg=1;				
 					printf("sigma = %f burnin = %d\n",sigma,kk);					
 					for(int jj=0;jj<2*(order+1);jj++)
-						theta[N*jj+tid+tt] = theta[N*jj+ii];
+						theta[N*jj+tid] = theta[N*jj+ii];
 					
-					ii = tid+tt;
+					ii = tid;
+					
+					
 				}
-				//printf("a_rate = %f\n",(double)accepted/1000);			
 				accepted=0;				
 				
 				
 			}
-			
-
-						
+			ii = ii+tt;		
 		}
+		printf("a_rate = %f\n",(double)accepted/(N/(64)));			
+
 
 	}
 
@@ -178,7 +185,7 @@ void mcmc(double *u,double *y,double *theta,long int N,int order, int num_sample
 	cudaMemcpy(d_y, y, u_size, cudaMemcpyHostToDevice );
 	cudaMemcpy(d_theta_0,theta_0,theta_0_size,cudaMemcpyHostToDevice);
 
-	mcmc_kernel<<<8,32>>>(d_u,d_y,d_theta,N,order,num_samples,d_theta_0,elim);
+	mcmc_kernel<<<8,8>>>(d_u,d_y,d_theta,N,order,num_samples,d_theta_0,elim);
 
 	cudaMemcpy( theta, d_theta, theta_size, cudaMemcpyDeviceToHost ); 
 
