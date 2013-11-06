@@ -133,12 +133,15 @@ void mcmc_kernel(double *u,double *y,double *theta,long int N,int order,int num_
 				else
 				{
 					flg=1;				
-					printf("sigma = %f\n",sigma);
+					printf("sigma = %f burnin = %d\n",sigma,kk);					
+					for(int jj=0;jj<2*(order+1);jj++)
+						theta[N*jj+tid+tt] = theta[N*jj+ii];
+					
+					ii = tid+tt;
 				}
-				//printf("a_rate = %f\n",(double)accepted/1000);
-				kk=0;
-				accepted=0;
-				ii = tid+tt;
+				//printf("a_rate = %f\n",(double)accepted/1000);			
+				accepted=0;				
+				
 				
 			}
 			
