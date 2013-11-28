@@ -8,7 +8,7 @@ elim = 0.1;
 u = ones(1,num_samples);
 [b,a] = butter(order,0.2);
 z = filter(b,a,u);
-theta_0 = 0.5.*[a b];
+theta_0 = [a b];
 e = elim*(2*rand(size(z))-1);
 y = z+e;
 
@@ -30,15 +30,10 @@ while k<=N
 	if max(abs(y-ytest))>elim
 		THETA(k,:) = THETA(k-1,:);
 	else
-		tt = y-ytest;
-		p_rat = 1-(max(tt));
-		if(rand()<=p_rat)
-			THETA(k,:) = xi;
-			accepted = accepted+1;
-		else
-			THETA(k,:) = THETA(k-1,:);
-		end
-    end
+		THETA(k,:) = xi;
+		accepted = accepted+1;		
+			
+    	end
     
     if(mod(count,1000)==0 && flg==0)
         if(accepted/1000>0.3)
@@ -63,5 +58,13 @@ for ii=1:(order+1)*2;
 	subplot(2,order+1,ii)
 	hist(THETA(:,ii),100)
 end
+figure(2)
+for ii=1:(order+1)*2;
+	subplot(2,order+1,ii)
+	plot(theta(:,ii))
+	title('Parallel chain realisations') 
+end
+mean(theta)
+theta_0'
 
 theta_0'

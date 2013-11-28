@@ -15,7 +15,7 @@ CUDA_LIB64='/usr/local/cuda/lib64'
 
 OBJECTS = ${OBJ}/mex_openmp.o\
 	  ${OBJ}/mcmc.o\
- 	  ${OBJ}/metropolis.o\
+ 	  ${OBJ}/slicesample.o\
  	  ${OBJ}/p_ratio.o\
 	  ${OBJ}/hash.o\
 	  ${OBJ}/filter.o
@@ -48,11 +48,11 @@ all: DIR $(OBJECTS)
 ${OBJ}/mex_openmp.o: ${SRC}/mex_openmp.cpp ${OBJ}/mcmc.o
 		$(CXX) -c $(CXX_SWITCH) $(LIB_DIR) $(LIB) $(IDIR) ${SRC}/mex_openmp.cpp -o ${OBJ}/mex_openmp.o
 
-${OBJ}/mcmc.o: ${SRC}/mcmc.cpp ${INC}/mcmc.h ${OBJ}/metropolis.o
+${OBJ}/mcmc.o: ${SRC}/mcmc.cpp ${INC}/mcmc.h ${OBJ}/slicesample.o
 		${CXX} -c ${CXX_SWITCH} ${LIB_DIR} ${LIB} ${IDIR} ${SRC}/mcmc.cpp -o ${OBJ}/mcmc.o
 
-${OBJ}/metropolis.o: ${SRC}/metropolis.cpp ${INC}/metropolis.h ${OBJ}/hash.o ${OBJ}/filter.o ${OBJ}/p_ratio.o
-		${CXX} -c ${CXX_SWITCH} ${LIB_DIR} ${LIB} ${IDIR} ${SRC}/metropolis.cpp -o ${OBJ}/metropolis.o
+${OBJ}/slicesample.o: ${SRC}/slicesample.cpp ${INC}/slicesample.h ${OBJ}/hash.o ${OBJ}/filter.o ${OBJ}/p_ratio.o
+		${CXX} -c ${CXX_SWITCH} ${LIB_DIR} ${LIB} ${IDIR} ${SRC}/slicesample.cpp -o ${OBJ}/slicesample.o
 
 ${OBJ}/p_ratio.o: ${SRC}/p_ratio.cpp ${INC}/p_ratio.h 
 		${CXX} -c ${CXX_SWITCH} ${LIB_DIR} ${LIB} ${IDIR} ${SRC}/p_ratio.cpp -o ${OBJ}/p_ratio.o

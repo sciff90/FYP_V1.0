@@ -1,7 +1,7 @@
 clear all;
 N = 1e7;
-num_samples = 50;
-order = 1;
+num_samples = 20;
+order = 2;
 elim = 0.1;
 
 
@@ -20,4 +20,18 @@ for ii=1:(order+1)*2;
 	subplot(2,order+1,ii)
 	hist(theta(:,ii),100)
 end
+figure(2)
+for ii=1:(order+1)*2;
+	subplot(2,order+1,ii)
+	plot(theta(1:12:N,ii))
+	title('Single chain realisations') 
+end
+figure(3)
+for ii=1:(order+1)*2;
+	subplot(2,order+1,ii)
+	plot(theta(:,ii))
+	title('Parallel chain realisations') 
+end
+mean(theta)
+theta_0'
 

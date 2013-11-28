@@ -30,7 +30,7 @@ void mcmc(double *u,double *y,double *theta,long int N,int order, int num_sample
 	#pragma omp parallel private(tid) 
 	{
 		tid = omp_get_thread_num();	
-		metropolis(u,y,theta,N,order,num_samples,theta_0,elim,nthreads,tid);
+		slicesample(u,y,theta,N,order,num_samples,theta_0,elim,nthreads,tid);
 	}
 
 

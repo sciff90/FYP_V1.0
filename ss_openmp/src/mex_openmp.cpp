@@ -13,7 +13,7 @@
  ********************************************************************/
 #include <mex.h> 
 #include <mcmc.h>
-
+#include <omp.h>
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 
