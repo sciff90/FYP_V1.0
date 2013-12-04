@@ -19,7 +19,7 @@ double p_ratio(int num_samples,double elim,double *y,double *y_test)
 	}
 
 	if(max_diff>elim)
-		return 0.0;
+		return -1e100;
 	
-	else return 1.0;
+	else return -num_samples*std::log(elim);
 }

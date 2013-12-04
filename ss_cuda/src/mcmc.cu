@@ -25,7 +25,7 @@ void mcmc(double *u,double *y,double *theta,long int N,int order, int num_sample
 	cudaMemcpy(d_y, y, u_size, cudaMemcpyHostToDevice );
 	cudaMemcpy(d_theta_0,theta_0,theta_0_size,cudaMemcpyHostToDevice);
 
-	metropolis<<<8,64>>>(d_u,d_y,d_theta,N,order,num_samples,d_theta_0,elim);
+	slicesample<<<8,128>>>(d_u,d_y,d_theta,N,order,num_samples,d_theta_0,elim);
 
 	cudaMemcpy( theta, d_theta, theta_size, cudaMemcpyDeviceToHost ); 
 

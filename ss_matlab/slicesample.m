@@ -36,7 +36,7 @@ while(k<=N)
 	
 		bit = rand;
 		theta_new_l(ii)	= theta_new(ii)-bit*width;
-		theta_new_r(ii)	= theta_new(ii)+bit*width;
+		theta_new_r(ii)	= theta_new(ii)+(1-bit)*width;
 		
 		% step out until horizontal span density
 		while(ptarget(y,u,elim,theta_new_l,order)>Puprime)
